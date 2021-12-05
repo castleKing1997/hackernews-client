@@ -22,8 +22,23 @@ const list = [
 
 class App extends Component {
   render() {
+    var handleChange = event => {
+      console.log(event);
+    };
     return (
       <div className="App">
+        <label htmlFor="search">Search:</label>
+        <input id="search" type="text" onChange={handleChange}/>
+        <List/>
+      </div>
+    );
+  };
+}
+
+class List extends Component {
+  render() {
+    return (
+      <div className="List">
         {list.map(item =>
           <div key={item.objectID}>
             <span>
@@ -35,7 +50,7 @@ class App extends Component {
           </div>
         )}
       </div>
-    );
+    )
   }
 }
 
