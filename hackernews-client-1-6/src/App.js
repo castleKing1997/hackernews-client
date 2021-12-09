@@ -1,30 +1,17 @@
-import React, { useState, useEffect, useRef, useReducer, Fragment} from 'react';
+import React, { useState, useEffect, useRef, useReducer, useCallback, Fragment} from 'react';
+import axios from 'axios'
 import './App.css';
 
-
-const initialStories = [
-  {
-    title: 'React',
-    url: 'https://facebook.github.io/react/',
-    author: 'Jordan Walke',
-    objectID: 0,
-  },
-  {
-    title: 'Redux',
-    url: 'https://github.com/reactjs/redux',
-    author: 'Dan Abramov, Andrew Clark',
-    objectID: 1,
-  },
-];
+const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
 // return data
-const getAsyncStories = () =>
-  new Promise(resolve =>
-    setTimeout(
-      () => resolve({ data: { stories: initialStories } }),
-      2000
-    )
-);
+// const getAsyncStories = () =>
+//   new Promise(resolve =>
+//     setTimeout(
+//       () => resolve({ data: { stories: initialStories } }),
+//       2000
+//     )
+// );
 
 // return timeout error
 // const getAsyncStories = () =>
@@ -77,25 +64,47 @@ const storiesReducer = (state, action) => {
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useSemiPersistentState("search", "React");
+  const [url, setUrl] = useState(
+    `${API_ENDPOINT}${searchTerm}`
+  );
   const [stories, dispatchStories] = useReducer(
     storiesReducer,
     { data: [], isLoading: false, isError: false }
   );
 
-  useEffect(() => {
+  const handleFetchStories = useCallback( () => {
     dispatchStories({ type: 'STORIES_FETCH_INIT' });
-    getAsyncStories()
+    axios
+      .get(url)
       .then(result => {
         dispatchStories({
           type: 'STORIES_FETCH_SUCCESS',
-          payload: result.data.stories,
+          payload: result.data.hits,
         });
       })
       .catch(() =>
         dispatchStories({ type: 'STORIES_FETCH_FAILURE' })
       );
-  }, [])
+  }, [url]);
+
+  // const handleFetchStories = useCallback(async () => {
+  //   dispatchStories({ type: 'STORIES_FETCH_INIT' });
+  //   try {
+  //     const result = await axios.get(url);
+  //     dispatchStories({
+  //       type: 'STORIES_FETCH_SUCCESS',
+  //       payload: result.data.hits,
+  //     });
+  //   } catch {
+  //     dispatchStories({ type: 'STORIES_FETCH_FAILURE' });
+  //   }
+  // }, [url]);
   
+  useEffect(() => {
+    handleFetchStories();
+  }, [handleFetchStories]);
+
+
   const handleRemoveStory = item => {
     dispatchStories({
       type: 'REMOVE_STORY',
@@ -103,27 +112,29 @@ const App = () => {
     });
   };
 
-  const handleSearch = event => {
+  const handleSearchInput = event => {
     setSearchTerm(event.target.value);
   };
 
-  const searchedStories = stories.data.filter(story => story.title
-    .toLowerCase()
-    .includes(searchTerm.toLowerCase())
-  );
+  const handleSearchSubmit = () => {
+    setUrl(`${API_ENDPOINT}${searchTerm}`);
+  };
 
   return (
     <div className="App">
-      <InputWithLabel id="search" value={searchTerm} onInputChange={handleSearch} isFocused>
+      <InputWithLabel id="search" value={searchTerm} onInputChange={handleSearchInput} isFocused>
         <strong>Label:</strong>
       </InputWithLabel>
+      <button type="button" disabled={!searchTerm} onClick={handleSearchSubmit}>
+        Submit
+      </button>
       <hr/>
       {stories.isError && <p>Something went wrong ...</p>}
       {stories.isLoading ? (
         <p>Loading ...</p>
       ) : (
         <List
-          list={searchedStories}
+          list={stories.data}
           onRemoveItem={handleRemoveStory}
         />
       )}
