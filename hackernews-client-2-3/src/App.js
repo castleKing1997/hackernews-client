@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useReducer, useCallback, Fragment} from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
+import { ReactComponent as Search } from './search.svg';
 
 const API_ENDPOINT = 'https://hn.algolia.com/api/v1/search?query=';
 
@@ -41,6 +42,10 @@ const StyledButton = styled.button`
   &:hover {
   background: #171212;
   color: #ffffff;
+  }
+  &:hover > svg > g {
+    fill: #ffffff;
+    stroke: #ffffff;
   }
 `;
 const StyledButtonSmall = styled(StyledButton)`
@@ -262,7 +267,7 @@ const SearchForm = ({
     <strong>Search:</strong>
     </InputWithLabel>
     <StyledButtonLarge type="submit" disabled={!searchTerm}>
-      Submit
+      <Search height="18px" width="18px" />
     </StyledButtonLarge>
   </StyledSearchForm>
 );
